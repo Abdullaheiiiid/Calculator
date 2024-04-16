@@ -1,0 +1,62 @@
+#include "typedef.h"
+#include "bit.h"
+#include "DIO_interface.h"
+#include "KPD_config.h"
+#include "KPD_interface.h"
+
+
+u8 KPD_VidGetPressedKey(){
+
+	//RETURNED VALUE LOCAL PRESSED KEY
+	u8 LPK = KPD_NO_PRESSED;
+	//LOCAL PIN STATE -> PIN VALUE (HIGH OR LOW)
+	u8 L_PIN_STATE;
+
+	//LOCAL KEYPAD ARRAY
+	static u8 L_KPD_ARR[KPD_ROW][KPD_COL]= KPD_Arr;
+	//LOCAL KEYPAD COLUMN ARRAY
+	static u8 L_KPD_COL_ARR[KPD_COL] = {KPD_COL1PIN,KPD_COL2PIN,KPD_COL3PIN,KPD_COL4PIN};
+	//LOCAL KEYPAD ROW ARRAY
+	static u8 L_KPD_ROW_ARR[KPD_ROW] = {KPD_ROW1PIN,KPD_ROW2PIN,KPD_ROW3PIN,KPD_ROW4PIN};
+
+	for(u8 L_COL_COUNTER = 0 ; L_COL_COUNTER < KPD_COL ; L_COL_COUNTER++){
+		//SET COLUMN LOW
+		DIO_VidSetPinValue(KPD_PORT , L_KPD_COL_ARR[L_COL_COUNTER],Pin_Low);
+		for(u8 L_ROW_COUNTER = 0 ; L_ROW_COUNTER < KPD_ROW ; L_ROW_COUNTER++){
+			//GET VALUE OF ROW
+			DIO_VidGetPinValue(KPD_PORT, L_KPD_ROW_ARR[L_ROW_COUNTER],&L_PIN_STATE);
+			//CHECK IF PRESSED
+			if(L_PIN_STATE == Pin_Low){
+				//SET WHIVH BUTTON PRESSED INTO LOCAL PRESSED KEYPAD
+				LPK = L_KPD_ARR[L_ROW_COUNTER][L_COL_COUNTER];
+				//CHECK IF STILL PRESSED
+				while(L_PIN_STATE == Pin_Low){
+					//GET VALUE OF ROW
+					DIO_VidGetPinValue(KPD_PORT, L_KPD_ROW_ARR[L_ROW_COUNTER],&L_PIN_STATE);
+				}
+				//RETURN LOCAL PRESSED KEYPAD OR BUTTON WHICH PRESSED
+				return LPK;
+			}
+		}
+		DIO_VidSetPinValue(KPD_PORT,L_KPD_COL_ARR[L_COL_COUNTER],Pin_High);
+	}
+	return LPK;
+}
+
+void KPD_VidInit(){
+
+	DIO_VidSetPinDirection(KPD_PORT,KPD_COL1PIN,Output);
+	DIO_VidSetPinDirection(KPD_PORT,KPD_COL2PIN,Output);
+	DIO_VidSetPinDirection(KPD_PORT,KPD_COL3PIN,Output);
+	DIO_VidSetPinDirection(KPD_PORT,KPD_COL4PIN,Output);
+
+	DIO_VidSetPinDirection(KPD_PORT,KPD_ROW1PIN,Input);
+	DIO_VidSetPinDirection(KPD_PORT,KPD_ROW2PIN,Input);
+	DIO_VidSetPinDirection(KPD_PORT,KPD_ROW3PIN,Input);
+	DIO_VidSetPinDirection(KPD_PORT,KPD_ROW4PIN,Input);
+
+	DIO_VidSetPortValue(KPD_PORT,0xff);
+}
+
+
+
